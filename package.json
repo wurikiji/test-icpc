@@ -24,6 +24,7 @@
   "bugs": {
     "url": "https://github.com/wurikiji/test-icpc/issues"
   },
+  "readme": "README.md",
   "devDependencies": {},
   "keywords": [
     "icpc", "baekjoon online", "auto test", "acmicpc", "acmicpc.net"
