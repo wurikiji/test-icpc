@@ -17,6 +17,13 @@
     "minimist": "^1.2.0",
     "request": "^2.83.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wurikiji/test-icpc"
+  },
+  "bugs": {
+    "url": "https://github.com/wurikiji/test-icpc/issues"
+  },
   "devDependencies": {},
   "keywords": [
     "icpc", "baekjoon online", "auto test", "acmicpc", "acmicpc.net"
