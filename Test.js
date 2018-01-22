@@ -25,7 +25,7 @@ if (problem == null || printUsage) {
     console.log(`           -e [binary file (default: {problem number}.bin)] -c [compiler (default: g++)]`);
     console.log(`           -o [compile options (default: --std=c++11 -O3)]`);
     console.log(`Extra options`);
-    console.log(`-f: force to reload sample data`);
+    console.log(`-f: force to compile and reload sample data`);
     console.log(`-h: show usage`);
     return;
 }
@@ -59,7 +59,7 @@ if (fs.existsSync('./result') == false) {
 var inputList = [];
 var outputList = [];
 
-if (fs.existsSync(binary) == false) {
+if (forceLoad ||  fs.existsSync(binary) == false) {
     console.log("Compile the source code");
     exec(compiler + ' ' + source + ' ' + cOptions, (err, stdout, stderr) => {
         if (err) {
