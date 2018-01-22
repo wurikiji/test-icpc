@@ -1,0 +1,24 @@
+{
+  "name": "test-icpc",
+  "version": "0.1.0",
+  "description": "Auto test sample data for acmicpc.net",
+  "main": "Test.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "test-icpc": "test-icpc.js"
+  }, 
+  "preferGlobal": true,
+  "author": {"name": "wurikiji", "email": "wurikiji@gmail.com"},
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "minimist": "^1.2.0",
+    "request": "^2.83.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "icpc", "baekjoon online", "auto test", "acmicpc", "acmicpc.net"
+  ]
+}
