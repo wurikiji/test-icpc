@@ -2,9 +2,14 @@ var request = require('request');
 var fs = require('fs');
 var cheerio = require('cheerio');
 var exec = require('child_process').exec;
-var argLength = process.argv.length;
-var baseUrl = 'https://www.acmicpc.net/problem/';
+var puppeteer = require('puppeteer');
 
+
+var baseUrl = 'https://www.acmicpc.net/problem/';
+var submitUrl = 'https://www.acmicpc.net/submit/';
+var statUrl = 'https://www.acmicpc.net/';
+
+var argLength = process.argv.length;
 var args = require('minimist')(process.argv.slice(2));
 
 var problem = args.n;
@@ -14,6 +19,7 @@ var compiler = args.c;
 var cOptions = args.o;
 var forceLoad = args.f;
 var printUsage = args.h;
+var submit = args.i;
 
 if (problem == null) {
     problem = args._[0];
@@ -26,6 +32,7 @@ if (problem == null || printUsage) {
     console.log(`           -o [compile options (default: --std=c++11 -O3)]`);
     console.log(`Extra options`);
     console.log(`-f: force to compile and reload sample data`);
+    console.log(`-i: skip tests and submit your code`);
     console.log(`-h: show usage`);
     return;
 }
@@ -59,7 +66,9 @@ if (fs.existsSync('./result') == false) {
 var inputList = [];
 var outputList = [];
 
-if (forceLoad ||  fs.existsSync(binary) == false) {
+if (submit) {
+	submitCode();
+} else if (forceLoad ||  fs.existsSync(binary) == false) {
     console.log("Compile the source code");
     exec(compiler + ' ' + source + ' ' + cOptions, (err, stdout, stderr) => {
         if (err) {
@@ -100,9 +109,10 @@ function getSampleAndRunTest() {
     }); // end of request(acmicpc.net)
 }
 function runTest() {
+	var passed = true;
     inputList.forEach(idx => {
         if (outputList.includes(idx)) {
-            process.stdout.write(`Run test ${idx}: `);
+            process.stdout.write(`Run test ${idx}\n`);
             exec(`${binary} < ./data/${problem}/${idx}.in > ./result/${problem}-${idx}.res` , (err, stdout, stderr) => {
                 if (err) {
                     console.log(err);
@@ -111,9 +121,10 @@ function runTest() {
                 }
                 exec(`diff -w ./data/${problem}/${idx}.out ./result/${problem}-${idx}.res` , (err, stdout, stderr) => {
                     if (stdout.length == 0) {
-                        console.log(`Passed`);
+                        console.log(`${idx} Passed\n`);
                     } else {
-                        console.log(`Failed`);
+                        console.log(`Failed\n`);
+						passed = false;
                     }
                 });
             });
@@ -144,4 +155,20 @@ function sampleTest() {
 
         runTest();
     }
+}
+
+function submitCode() {
+	(async () => {
+		const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+		const page = await browser.newPage();
+		await page.goto(submitUrl + problem, {waitUntil: 'networkidle2'});
+		const inputForm = await page.$$('input.form-control');
+		console.log(idForm);
+		const idForm = inputForm[0];
+		const pwForm = inputForm[1];
+		await idForm.type('test');
+
+		await page.screenshot({path:'test.png'});
+		await browser.close();
+	})();
 }
