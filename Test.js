@@ -4,7 +4,6 @@ var cheerio = require('cheerio');
 var exec = require('child_process').exec;
 var puppeteer = require('puppeteer');
 var readline = require('readline-sync');
-const cp = require('clipboardy');
 
 var baseUrl = 'https://www.acmicpc.net/problem/';
 var submitUrl = 'https://www.acmicpc.net/submit/';
@@ -194,6 +193,7 @@ function submitCode() {
             waitUntil:'load',
             timeout: 0
         });
+
         await page.pdf({path:'test7.pdf'});
 
         await browser.close();
