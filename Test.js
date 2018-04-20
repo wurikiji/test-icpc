@@ -7,7 +7,7 @@ var readline = require('readline-sync');
 
 var baseUrl = 'https://www.acmicpc.net/problem/';
 var submitUrl = 'https://www.acmicpc.net/submit/';
-var statUrl = 'https://www.acmicpc.net/';
+var statUrl = 'https://www.acmicpc.net/status/';
 
 var argLength = process.argv.length;
 var args = require('minimist')(process.argv.slice(2));
@@ -20,6 +20,8 @@ var cOptions = args.o;
 var forceLoad = args.f;
 var printUsage = args.h;
 var submit = args.i;
+var id = args.u;
+var pw = args.p;
 
 if (problem == null) {
     problem = args._[0];
@@ -30,6 +32,7 @@ if (problem == null || printUsage) {
     console.log(`test-icpc -n [problem number] -s [source code file (default: {problem number}.cpp)]`);
     console.log(`           -e [binary file (default: {problem number}.bin)] -c [compiler (default: g++)]`);
     console.log(`           -o [compile options (default: --std=c++11 -O3)]`);
+    console.log(`           -u [BOJ ID] -p [BOJ Password]`);
     console.log(`Extra options`);
     console.log(`-f: force to compile and reload sample data`);
     console.log(`-i: skip tests and submit your code`);
@@ -157,13 +160,20 @@ function sampleTest() {
     }
 }
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 function submitCode() {
-    var id = readline.question('Your id: ');
-    var pw = readline.question('Your pw: ', {hideEchoBack: true});
+    if (id == null) {
+        id = readline.question('Your id: ');
+        pw = readline.question('Your pw: ', {hideEchoBack: true});
+    }
     
     var code = fs.readFileSync(source, 'utf8').toString();
     (async() => {
-        const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+        const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        
         const page = await browser.newPage();
         console.log("Go to BOJ");
         const response = await page.goto(submitUrl + problem, {waitUntil: 'domcontentloaded'});
@@ -180,21 +190,45 @@ function submitCode() {
         });
 
         console.log("Type code");
-        await page.type('.CodeMirror-code', code + '/*');
-        await page.click('.CodeMirror-code');
+        await page.click('.CodeMirror-line');
+        await page.keyboard.type(code + '/*');
+
+        // await page.click('.CodeMirror-line');
         await page.keyboard.down('ControlLeft')
         await page.keyboard.press('End');
         await page.keyboard.up('ControlLeft');
         await page.keyboard.type('*/');
+        
         await page.click('button.btn.btn-primary');
         
         console.log("Fetch a result");
+
         await page.waitForNavigation({
             waitUntil:'load',
             timeout: 0
         });
-
-        await page.pdf({path:'test7.pdf'});
+        var stat = await page.content();
+        var $ = cheerio.load(stat);
+        
+        var result = ($('td.result span').text());
+        result = (result.replace(/\s+/g, ' ').split(' ')[0]);
+        while (1) {
+            await page.reload({
+                waitUntil: 'load',
+                timeout: 0
+            })
+            stat = await page.content();
+            $ = cheerio.load(stat);
+            result = ($('td.result span').text());
+            result = (result.replace(/\s+/g, ' ').split(' ')[0]);
+            if (result.indexOf('기다') == -1 && result.indexOf('채점') == -1){
+                break;
+            }
+            process.stdout.write(result + "\r");
+            await sleep(500);
+        }
+        process.stdout.write("\n" + result + "\n");
+        await page.pdf({path:problem + '.pdf'});
 
         await browser.close();
     })();
