@@ -61,3 +61,5 @@ data/
 binary/
 result/
 *.cpp
+testid
+*.pdf

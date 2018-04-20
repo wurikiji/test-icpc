@@ -3,7 +3,8 @@ var fs = require('fs');
 var cheerio = require('cheerio');
 var exec = require('child_process').exec;
 var puppeteer = require('puppeteer');
-
+var readline = require('readline-sync');
+const cp = require('clipboardy');
 
 var baseUrl = 'https://www.acmicpc.net/problem/';
 var submitUrl = 'https://www.acmicpc.net/submit/';
@@ -158,17 +159,43 @@ function sampleTest() {
 }
 
 function submitCode() {
-	(async () => {
-		const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
-		const page = await browser.newPage();
-		await page.goto(submitUrl + problem, {waitUntil: 'networkidle2'});
-		const inputForm = await page.$$('input.form-control');
-		console.log(idForm);
-		const idForm = inputForm[0];
-		const pwForm = inputForm[1];
-		await idForm.type('test');
+    var id = readline.question('Your id: ');
+    var pw = readline.question('Your pw: ', {hideEchoBack: true});
+    
+    var code = fs.readFileSync(source, 'utf8').toString();
+    (async() => {
+        const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+        const page = await browser.newPage();
+        console.log("Go to BOJ");
+        const response = await page.goto(submitUrl + problem, {waitUntil: 'domcontentloaded'});
+        
+        await page.type('input.form-control[name="login_user_id"]', id);
+        await page.type('input.form-control[name="login_password"]', pw);
 
-		await page.screenshot({path:'test.png'});
-		await browser.close();
-	})();
+        console.log("Try to login");
+        await page.click('button.pull-right[type="submit"]');
+
+        await page.waitForNavigation( {
+            waitUntil:'load', 
+            timeout: 0
+        });
+
+        console.log("Type code");
+        await page.type('.CodeMirror-code', code + '/*');
+        await page.click('.CodeMirror-code');
+        await page.keyboard.down('ControlLeft')
+        await page.keyboard.press('End');
+        await page.keyboard.up('ControlLeft');
+        await page.keyboard.type('*/');
+        await page.click('button.btn.btn-primary');
+        
+        console.log("Fetch a result");
+        await page.waitForNavigation({
+            waitUntil:'load',
+            timeout: 0
+        });
+        await page.pdf({path:'test7.pdf'});
+
+        await browser.close();
+    })();
 }
