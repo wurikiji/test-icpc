@@ -1,6 +1,6 @@
 {
   "name": "test-icpc",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Auto test sample data for acmicpc.net and submit",
   "main": "Test.js",
   "scripts": {

@@ -171,17 +171,19 @@ function submitCode() {
     
     var code = fs.readFileSync(source, 'utf8').toString();
     (async() => {
-        const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']
+        const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox', '--proxy-server="direct://"', 
+        '--proxy-bypass-list=*']
         });
         
         const page = await browser.newPage();
-        console.log("Go to BOJ");
+
+        //console.log("Go to BOJ");
         const response = await page.goto(submitUrl + problem, {waitUntil: 'domcontentloaded'});
         
         await page.type('input.form-control[name="login_user_id"]', id);
         await page.type('input.form-control[name="login_password"]', pw);
 
-        console.log("Try to login");
+        console.log("Login...");
         await page.click('button.pull-right[type="submit"]');
 
         await page.waitForNavigation( {
@@ -189,7 +191,7 @@ function submitCode() {
             timeout: 0
         });
 
-        console.log("Type code");
+        console.log("Submit code...");
         await page.click('.CodeMirror-line');
         await page.keyboard.type(code + '/*');
 
@@ -201,7 +203,7 @@ function submitCode() {
         
         await page.click('button.btn.btn-primary');
         
-        console.log("Fetch a result");
+        console.log("Wait for a result...");
 
         await page.waitForNavigation({
             waitUntil:'load',
@@ -210,8 +212,6 @@ function submitCode() {
         var stat = await page.content();
         var $ = cheerio.load(stat);
         
-        var result = ($('td.result span').text());
-        result = (result.replace(/\s+/g, ' ').split(' ')[0]);
         while (1) {
             await page.reload({
                 waitUntil: 'load',
@@ -219,16 +219,18 @@ function submitCode() {
             })
             stat = await page.content();
             $ = cheerio.load(stat);
-            result = ($('td.result span').text());
-            result = (result.replace(/\s+/g, ' ').split(' ')[0]);
+
+            // add space to prevent unexpected text format 
+            result = ' ' + ($('td.result span span').text()); 
+            result = (result.replace(/\s+/g, ' ').split(' ')[1]);
             if (result.indexOf('기다') == -1 && result.indexOf('채점') == -1){
+                process.stdout.write(result + "\t\t\t\n");
                 break;
             }
             process.stdout.write(result + "\r");
             await sleep(500);
         }
-        process.stdout.write("\n" + result + "\n");
-        await page.pdf({path:problem + '.pdf'});
+        // await page.pdf({path:problem + '.pdf'});
 
         await browser.close();
     })();
